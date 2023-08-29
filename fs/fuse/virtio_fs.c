@@ -563,6 +563,7 @@ static void virtio_fs_request_complete(struct fuse_req *req,
 	struct fuse_args_pages *ap;
 	unsigned int len, i, thislen;
 	struct page *page;
+	char *to;
 
 	/*
 	 * TODO verify that server properly follows FUSE protocol
@@ -583,6 +584,30 @@ static void virtio_fs_request_complete(struct fuse_req *req,
 				len = 0;
 			} else {
 				len -= thislen;
+			}
+		}
+	}
+
+	if (args->out_pages) {
+		len = args->out_args[args->out_numargs - 1].size;
+		ap = container_of(args, typeof(*ap), args);
+		for (i = 0; i < ap->num_pages; i++) {
+			thislen = ap->descs[i].length;
+			page = ap->pages[i];
+			pr_err("virtio_fs: page: %p\n", page);
+			if (page) {
+				to = kmap_local_page(page);
+
+				pr_err("virtio_fs: to: %p\n", to);
+				if (to) {
+					print_hex_dump_bytes("virtio_fs rsp:", DUMP_PREFIX_NONE, to, thislen);
+					flush_dcache_page(page);
+					kunmap_local(to);
+				} else {
+					pr_err("virtio_fs: mapping failed!\n");
+				}
+			} else {
+				pr_err("virtio_fs: no page?\n");
 			}
 		}
 	}

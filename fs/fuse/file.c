@@ -940,6 +940,7 @@ static void fuse_readpages_end(struct fuse_mount *fm, struct fuse_args *args,
 
 	if (mapping) {
 		struct inode *inode = mapping->host;
+		pr_debug("virtio_fs: %s: inode: %d\n", __func__, inode->i_ino);
 
 		/*
 		 * Short read means EOF. If file size is larger, truncate it
